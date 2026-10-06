@@ -162,12 +162,22 @@ when ODIN_OS == .Windows {
         }
     }
 } else when ODIN_OS == .Linux {
-    when USE_DLL {
-        when DEBUG { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_debug.so" } }
-        else       { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_release.so" } }
+    when ODIN_ARCH == .arm64 {
+        when USE_DLL {
+            when DEBUG { foreign import sokol_log_clib { "sokol_log_linux_arm64_gl_debug.so" } }
+            else       { foreign import sokol_log_clib { "sokol_log_linux_arm64_gl_release.so" } }
+        } else {
+            when DEBUG { foreign import sokol_log_clib { "sokol_log_linux_arm64_gl_debug.a" } }
+            else       { foreign import sokol_log_clib { "sokol_log_linux_arm64_gl_release.a" } }
+        }
     } else {
-        when DEBUG { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_debug.a" } }
-        else       { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_release.a" } }
+        when USE_DLL {
+            when DEBUG { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_debug.so" } }
+            else       { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_release.so" } }
+        } else {
+            when DEBUG { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_debug.a" } }
+            else       { foreign import sokol_log_clib { "sokol_log_linux_x64_gl_release.a" } }
+        }
     }
 } else when ODIN_ARCH == .wasm32 || ODIN_ARCH == .wasm64p32 {
     // Feed sokol_log_wasm_gl_debug.a or sokol_log_wasm_gl_release.a into emscripten compiler.

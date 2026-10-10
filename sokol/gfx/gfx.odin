@@ -1999,8 +1999,9 @@ when ODIN_OS == .Windows {
     	}
     }
 } else when ODIN_ARCH == .wasm32 || ODIN_ARCH == .wasm64p32 {
-	// Feed sokol_gfx_wasm_gl_debug.a or sokol_gfx_wasm_gl_release.a into emscripten compiler.
-	foreign import sokol_gfx_clib "env.o"
+	// RuiShin: pure-WASM (js_wasm32, no Emscripten). Built by sokol/build_clibs_wasm.sh with
+	// clang + vendor:libc-shim; the GL calls stay undefined and are provided on the Odin side.
+	when DEBUG {foreign import sokol_gfx_clib "sokol_gfx_wasm_gl_debug.o"} else {foreign import sokol_gfx_clib "sokol_gfx_wasm_gl_release.o"}
 } else {
 	#panic("This OS is currently not supported")
 }

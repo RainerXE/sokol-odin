@@ -13,8 +13,10 @@
 # Currently built: gfx only.
 #   - sokol_app is not built for the web: RuiShin has its own web platform layer on
 #     core:sys/wasm/js (plan 261006-pure-wasm-web.md, step 3).
-#   - sokol_log / sokol_time include <emscripten/emscripten.h> when __EMSCRIPTEN__ is set;
-#     they get Odin replacements instead (step 3).
+#   - sokol_log: the C version needs <emscripten/emscripten.h> (EM_JS). On wasm the Odin
+#     binding provides `slog.func` itself (sokol/log/log_wasm.odin), nothing to build.
+#   - sokol_time: also needs emscripten.h; RuiShin does not use it, so no wasm replacement
+#     exists yet (Odin's core:time covers it if ever needed).
 #   - glue/gl/shape/debugtext compile, but nothing needs them on the web yet.
 #
 # The GL calls sokol_gfx makes (glBindBuffer, ...) are left UNDEFINED in the .o: the Odin
@@ -22,7 +24,8 @@
 #
 # Requirements: clang with the wasm32 backend (Homebrew `llvm`, NOT Apple's /usr/bin/clang),
 # `odin` on PATH (for `odin root`), and the Khronos GLES3 headers (GLES3/gl3.h,
-# KHR/khrplatform.h) -- compile-time only, nothing is linked from them.
+# KHR/khrplatform.h) -- compile-time only; RuiShin bundles pinned copies in
+# vendor-local/khronos-headers, which are used by default.
 #
 #   CLANG=/path/to/clang         override the compiler
 #   GLES3_INCLUDE=/path/include  dir that contains GLES3/gl3.h
@@ -52,6 +55,11 @@ find_clang() {
 
 find_gles3_include() {
     if [ -n "${GLES3_INCLUDE:-}" ]; then echo "$GLES3_INCLUDE"; return; fi
+    # RuiShin ships pinned copies next to this submodule (vendor-local/khronos-headers).
+    local bundled="$PWD/../../khronos-headers"
+    if [ -f "$bundled/GLES3/gl3.h" ] && [ -f "$bundled/KHR/khrplatform.h" ]; then
+        (cd "$bundled" && pwd); return
+    fi
     for d in /opt/homebrew/include /usr/local/include /usr/include \
              /opt/homebrew/opt/mesa/include; do
         if [ -f "$d/GLES3/gl3.h" ] && [ -f "$d/KHR/khrplatform.h" ]; then echo "$d"; return; fi

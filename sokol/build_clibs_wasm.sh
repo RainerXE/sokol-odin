@@ -38,20 +38,11 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
+# RuiShin layout: shared toolchain discovery lives next to the submodule (vendor-local/wasm-support).
+source "$PWD/../../wasm-support/toolchain.sh"
 
 declare -a libs=("gfx")
 
-find_clang() {
-    if [ -n "${CLANG:-}" ]; then echo "$CLANG"; return; fi
-    for c in /opt/homebrew/opt/llvm/bin/clang /usr/local/opt/llvm/bin/clang \
-             "$(command -v clang-22 clang-21 clang-20 clang 2>/dev/null | head -1)"; do
-        if [ -n "$c" ] && [ -x "$c" ] && "$c" --print-targets 2>/dev/null | grep -qi wasm32; then
-            echo "$c"; return
-        fi
-    done
-    echo "ERROR: no clang with the wasm32 backend found (Apple's clang has none; 'brew install llvm')" >&2
-    exit 1
-}
 
 find_gles3_include() {
     if [ -n "${GLES3_INCLUDE:-}" ]; then echo "$GLES3_INCLUDE"; return; fi
@@ -70,8 +61,7 @@ find_gles3_include() {
 
 CLANG="$(find_clang)"
 GLES3_INC="$(find_gles3_include)"
-SYSROOT="$(odin root)vendor/libc-shim"
-[ -d "$SYSROOT" ] || { echo "ERROR: $SYSROOT missing (needs an Odin with vendor:libc-shim)"; exit 1; }
+SYSROOT="$(libc_shim)"
 
 COMMON=(-c --target=wasm32 --sysroot="$SYSROOT" -DIMPL -DSOKOL_GLES3 -D__EMSCRIPTEN__
         -I"$GLES3_INC" -Wno-unused-function)
